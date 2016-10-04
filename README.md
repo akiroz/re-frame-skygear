@@ -80,13 +80,14 @@ You can provide more than one record at the root level using a vector.
 Although you can't save 2 identical records in a single `:save` operation.
 
 Records can also be nested as long as no loops exists,
-they will become skygear references.
+they will become skygear references. Native Skygear Record objects
+may also be saved by tagging them with the `^:record` metadata.
 
 File assets are supported by passing either a JS file object
 or URL string that has the `^:file` metadata attached.
 
 Geolocation can be saved by adding the `^:geo` metadata to a 
-2-element vector: `[<latitude> <longitude>]`
+2-element vector: `[<latitude> <longitude>]` or native Skygear Geolocation object
 
 #### Query
 The `:query` action supports the following `:where` clauses:
