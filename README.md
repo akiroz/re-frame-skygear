@@ -43,18 +43,10 @@ Here's the complete effects map:
            :passwd      {:old-pass ""
                          :new-pass ""}
            :access      :rw
-           :save        ^:record
-                        {:_type "person"
-                         :name "bob"
-                         :age 20
-                         :sister ^:record
-                                 {:_type "person"
-                                  :name "alice"
-                                  :age 12}
-                         :pet ^:record
-                              {:_type "animal"
-                               :species "cat"
-                               :name "lucy"}}
+           :save        {:records [^:rec
+                                   {:_type "person"
+                                    :name "bob"
+                                    :age 20}]}
            :query       {:record "person"
                          :where {:age {:>         20
                                        :sort-asc  true}}
@@ -74,20 +66,23 @@ The `:access` action sets the default permission on publicDB,
 possible values are: `:none`, `:ro`, and `:rw`.
 
 #### Save
-The `:save` action identifies records using a metadata `^:record`,
-the record type is specified by a special field `:_type`.
-You can provide more than one record at the root level using a vector.
-Although you can't save 2 identical records in a single `:save` operation.
 
-Records can also be nested as long as no loops exists,
-they will become skygear references. Native Skygear Record objects
-may also be saved by tagging them with the `^:record` metadata.
+The `:save` action uses metadata to build requests.
+Since native JS objects don't support metadata,
+they must be wraped inside a vector: `^:ref [<JS Object>]`
 
-File assets are supported by passing either a JS file object
-or URL string that has the `^:file` metadata attached.
+```clojure
+{:save {:records [                                ;; vec of items to save
+                  ^:rec
+                  {:_type ""                      ;; record type
+                   :owner ^:ref [user]            ;; reference existing skygear record
+                   :photo ^:file {:file obj}      ;; upload a file (JS File / URL)
+                   :place ^:geo [0,0]             ;; geolocation (vec / skygear obj)
+                   :related ^:rec                 ;; save & reference new record
+                            {:_type ""
+                             :field "value"}}]}}
+```
 
-Geolocation can be saved by adding the `^:geo` metadata to a 
-2-element vector: `[<latitude> <longitude>]` or native Skygear Geolocation object
 
 #### Query
 The `:query` action supports the following `:where` clauses:

@@ -8,9 +8,10 @@
   
   :profiles {:test {:plugins [[lein-cljsbuild "1.1.4"]
                               [lein-doo "0.1.7"]]
-                    :dependencies [[org.clojure/clojure "1.8.0"]
+                    :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
                                    [org.clojure/clojurescript "1.9.229"]
                                    [org.clojure/core.async "0.2.391"]
+                                   [binaryage/oops "0.4.0"]
                                    [re-frame "0.8.0"]
                                    [reagent "0.6.0"]
                                    ]
