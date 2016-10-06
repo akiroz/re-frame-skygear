@@ -33,7 +33,8 @@
                   (throw (str "[skygear] Unrecognized query condition " clause))
                   ))))
           query))
-       ((fn applu-limits [query]
+       ((fn apply-limits [query]
           (when limit (set! query.limit limit))
-          (when page  (set! query.page  page))))
+          (when page  (set! query.page  page))
+          query))
        (.query skygear.publicDB)))
