@@ -1,5 +1,6 @@
 (ns akiroz.re-frame.skygear.users
-  (:require [cljsjs.skygear]))
+  (:require [cljs.spec :as s]
+            [cljsjs.skygear]))
 
 (def skygear js/skygear)
 
@@ -14,3 +15,15 @@
 
 (defn passwd [{:keys [old-pass new-pass]}]
   (.changePassword skygear old-pass new-pass))
+
+
+(s/def ::username string?)
+(s/def ::password string?)
+
+(s/def ::old-pass ::password)
+(s/def ::new-pass ::password)
+
+(s/def ::login (s/keys :req [::username ::password]))
+(s/def ::signup (s/keys :req [::username ::password]))
+(s/def ::passwd (s/keys :req [::old-pass ::new-pass]))
+(s/def ::logout (fn [_] true))

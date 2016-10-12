@@ -76,7 +76,7 @@ they must be wraped inside a vector: `^:ref [<JS Object>]`
                   ^:rec
                   {:_type ""                      ;; record type
                    :owner ^:ref [user]            ;; reference existing skygear record
-                   :photo ^:file {:file obj}      ;; upload a file (JS File / URL)
+                   :photo ^:asset {:file obj}      ;; upload a file (JS File / URL)
                    :place ^:geo [0,0]             ;; geolocation (vec / skygear obj)
                    :related ^:rec                 ;; save & reference new record
                             {:_type ""

@@ -1,15 +1,19 @@
 (ns akiroz.re-frame.skygear.access
-  (:require [cljsjs.skygear]))
+  (:require [cljs.spec :as s]
+            [cljsjs.skygear]))
 
 (def skygear js/skygear)
 
-(defn default [permission]
+(defn access [{:keys [permission]}]
   (->> (new skygear.ACL)
        ((fn [acl]
           (case permission
             :none (.setPublicNoAccess acl)
             :ro   (.setPublicReadOnly acl)
             :rw   (.setPublicReadWriteAccess acl)
-            (throw (str "[skygear] Unrecognized permission " permission)))
+            )
           acl))
        (.setDefaultACL skygear)))
+
+(s/def ::permission #{:none :ro :rw})
+(s/def ::access (s/keys :req [::permission]))

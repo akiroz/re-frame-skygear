@@ -1,5 +1,6 @@
 (ns akiroz.re-frame.skygear.records
-  (:require [clojure.walk :refer [postwalk]]
+  (:require [cljs.spec :as s]
+            [clojure.walk :refer [postwalk]]
             [oops.core :refer [oget]]
             [cljsjs.skygear]))
 
@@ -35,7 +36,7 @@
             (:ref tags)   (let [ref-obj (new skygear.Reference (elm 0))]
                             (swap! references assoc (oget elm "id") ref-obj)
                             ref-obj)
-            (:file tags)  (->> (assoc elm :name (str (random-uuid)))
+            (:asset tags) (->> (assoc elm :name (str (random-uuid)))
                                (clj->js)
                                (new skygear.Asset))
             (:geo tags)   (if (= (count elm) 2)
@@ -44,3 +45,38 @@
             :else elm)))
       records)
     (.save skygear.publicDB (clj->js @linearized) #js{:atomic true})))
+
+
+
+
+(s/def ::primitive (s/or :nil      nil?
+                         :boolean  boolean?
+                         :number   number?
+                         :string   string?
+                         :object   (partial instance? js/Object)))
+
+(s/def ::geo (s/and #(:geo (meta %))
+                    (s/or :tuple  (s/tuple number? number?)
+                          :object (partial instance? skygear.Geolocation))))
+
+(s/def ::url string?)
+(s/def ::file (partial instance? js/File))
+(s/def ::asset (s/and #(:asset (meta %))
+                      (s/keys :req [(or ::url ::file)])))
+
+(s/def ::ref (s/and #(:ref (meta %))
+                    (partial instance? skygear.Reference)))
+
+(s/def ::_type string?)
+(s/def ::rec (s/and #(:rec (meta %))
+                    (s/or :object (partial instance? skygear.Record)
+                          :map    (s/and (s/keys :req [::_type])
+                                         (s/map-of keyword?
+                                                   (s/or :record      ::rec
+                                                         :reference   ::ref
+                                                         :asset       ::asset
+                                                         :geolocation ::geo
+                                                         :primitive   ::primitive))))))
+
+(s/def ::records (s/coll-of ::rec :kind vector?))
+(s/def ::save (s/keys :req [::records]))

@@ -1,5 +1,6 @@
 (ns akiroz.re-frame.skygear
-  (:require [re-frame.core :refer [reg-fx reg-cofx dispatch ->interceptor]]
+  (:require [cljs.spec :as s]
+            [re-frame.core :refer [reg-fx reg-cofx dispatch ->interceptor]]
             [akiroz.re-frame.skygear.users :as sg-users]
             [akiroz.re-frame.skygear.access :as sg-access]
             [akiroz.re-frame.skygear.records :as sg-records]
@@ -9,38 +10,70 @@
 
 (def skygear js/skygear)
 
-(defn- promise->dispatch [{:keys [success-event fail-event]} promise-obj]
-  (let [then-fn   (if (keyword? success-event)
-                    (fn [data] (dispatch [success-event data]))
-                    (fn []))
-        catch-fn  (if (keyword? fail-event)
-                    (fn [err] (dispatch [fail-event err]))
-                    (fn []))]
-    (-> promise-obj
-        (.then then-fn)
-        (.catch catch-fn))))
 
 (defn- sg-init [{:keys [end-point api-key]}]
   (.config skygear #js {:endPoint end-point :apiKey api-key}))
 
+
+(defn- promises->dispatch [{:keys [success-event fail-event]} promises]
+  (-> (if (= (count promises) 1)
+        (first promises)
+        (.all js/Promise (clj->js promises)))
+      (.then  (if success-event
+                (fn [data] (dispatch [success-event data]))
+                (fn [])))
+      (.catch (if fail-event
+                (fn [err] (dispatch [fail-event err]))
+                (fn [])))))
+
 (defn- do-fx [fx-map]
-  (doseq [[op args] fx-map]
-    (case op
-      :init         (promise->dispatch args (sg-init                args))
-      :login        (promise->dispatch args (sg-users/login         args))
-      :logout       (promise->dispatch args (sg-users/logout        args))
-      :signup       (promise->dispatch args (sg-users/signup        args))
-      :passwd       (promise->dispatch args (sg-users/passwd        args))
-      :access       (promise->dispatch args (sg-access/default      args))
-      :save         (promise->dispatch args (sg-records/save        args))
-      :query        (promise->dispatch args (sg-query/query         args))
-      ;:subscribe    (promise->dispatch args (sg-events/subscribe    args))
-      ;:unsubscribe  (promise->dispatch args (sg-events/unsubscribe  args))
-      ;:publish      (promise->dispatch args (sg-events/publich      args))
-      (throw (str "[skygear] Unrecognized action " op)))))
+  (->> (for [[op args] fx-map]
+         (case op
+           :init         (sg-init                args)
+           :login        (sg-users/login         args)
+           :logout       (sg-users/logout        args)
+           :signup       (sg-users/signup        args)
+           :passwd       (sg-users/passwd        args)
+           :access       (sg-access/access       args)
+           :save         (sg-records/save        args)
+           :query        (sg-query/query         args)
+           ;:subscribe    (sg-events/subscribe    args)
+           ;:unsubscribe  (sg-events/unsubscribe  args)
+           ;:publish      (sg-events/publich      args)
+           #_else        nil))
+       (filter (partial instance? js/Promise))
+       (promises->dispatch fx-map)))
 
 (defn- cofx-map []
   {:user skygear.currentUser})
+
+
+
+(s/def ::end-point string?)
+(s/def ::api-key string?)
+(s/def ::init (s/keys :req [::end-point ::api-key]))
+
+(s/def ::success-event keyword?)
+(s/def ::fail-event keyword?)
+
+(s/def ::fx-map
+  (s/keys :req [(or ::init
+                    ::sg-users/login
+                    ::sg-users/logout
+                    ::sg-users/signup
+                    ::sg-users/passwd
+                    ::sg-access/access
+                    ::sg-records/save
+                    ::sg-query/query
+                    ;::sg-events/subscribe
+                    ;::sg-events/unsubscribe
+                    ;::sg-events/publish
+                    )]
+          :opt [::success-event ::fail-event]))
+
+(s/fdef do-fx
+  :args (s/cat :fx-map ::fx-map))
+
 
 ;; Public API ==================================================
 
