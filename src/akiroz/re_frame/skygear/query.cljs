@@ -71,13 +71,13 @@
 (s/def ::record string?)
 (s/def ::where
   (s/map-of keyword?
-            (s/keys :req [(or ::= ::not= ::< ::<= ::> ::>= ::in ::not-in
-                              ::contains ::not-contains ::like ::not-like
-                              ::sort-asc ::sort-dec ::transient
-                              )])))
+            (s/keys :req-un [(or ::= ::not= ::< ::<= ::> ::>= ::in ::not-in
+                                 ::contains ::not-contains ::like ::not-like
+                                 ::sort-asc ::sort-dec ::transient
+                                 )])))
 (s/def ::limit nat-int?)
 (s/def ::page nat-int?)
 
 (s/def ::query
-  (s/keys :req [::record]
-          :opt [::where ::limit ::page]))
+  (s/keys :req-un [::record]
+          :opt-un [::where ::limit ::page]))

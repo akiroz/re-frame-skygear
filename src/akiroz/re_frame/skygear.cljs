@@ -27,6 +27,8 @@
                 (fn [])))))
 
 (defn- do-fx [fx-map]
+  (when-not (s/valid? ::fx-map fx-map)
+    (throw (with-out-str (s/explain ::fx-map fx-map))))
   (->> (for [[op args] fx-map]
          (case op
            :init         (sg-init                args)
@@ -51,28 +53,25 @@
 
 (s/def ::end-point string?)
 (s/def ::api-key string?)
-(s/def ::init (s/keys :req [::end-point ::api-key]))
+(s/def ::init (s/keys :req-un [::end-point ::api-key]))
 
 (s/def ::success-event keyword?)
 (s/def ::fail-event keyword?)
 
 (s/def ::fx-map
-  (s/keys :req [(or ::init
-                    ::sg-users/login
-                    ::sg-users/logout
-                    ::sg-users/signup
-                    ::sg-users/passwd
-                    ::sg-access/access
-                    ::sg-records/save
-                    ::sg-query/query
-                    ;::sg-events/subscribe
-                    ;::sg-events/unsubscribe
-                    ;::sg-events/publish
-                    )]
-          :opt [::success-event ::fail-event]))
-
-(s/fdef do-fx
-  :args (s/cat :fx-map ::fx-map))
+  (s/keys :req-un [(or ::init
+                       ::sg-users/login
+                       ::sg-users/logout
+                       ::sg-users/signup
+                       ::sg-users/passwd
+                       ::sg-access/access
+                       ::sg-records/save
+                       ::sg-query/query
+                       ;::sg-events/subscribe
+                       ;::sg-events/unsubscribe
+                       ;::sg-events/publish
+                       )]
+          :opt-un [::success-event ::fail-event]))
 
 
 ;; Public API ==================================================

@@ -23,7 +23,7 @@
 (s/def ::old-pass ::password)
 (s/def ::new-pass ::password)
 
-(s/def ::login (s/keys :req [::username ::password]))
-(s/def ::signup (s/keys :req [::username ::password]))
-(s/def ::passwd (s/keys :req [::old-pass ::new-pass]))
+(s/def ::login (s/keys :req-un [::username ::password]))
+(s/def ::signup (s/keys :req-un [::username ::password]))
+(s/def ::passwd (s/keys :req-un [::old-pass ::new-pass]))
 (s/def ::logout (fn [_] true))

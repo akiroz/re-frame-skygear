@@ -16,4 +16,4 @@
        (.setDefaultACL skygear)))
 
 (s/def ::public #{:none :ro :rw})
-(s/def ::access (s/keys :req [::public]))
+(s/def ::access (s/keys :req-un [::public]))

@@ -62,7 +62,7 @@
 (s/def ::url string?)
 (s/def ::file (partial instance? js/File))
 (s/def ::asset (s/and #(:asset (meta %))
-                      (s/keys :req [(or ::url ::file)])))
+                      (s/keys :req-un [(or ::url ::file)])))
 
 (s/def ::ref (s/and #(:ref (meta %))
                     (partial instance? skygear.Reference)))
@@ -70,7 +70,7 @@
 (s/def ::_type string?)
 (s/def ::rec (s/and #(:rec (meta %))
                     (s/or :object (partial instance? skygear.Record)
-                          :map    (s/and (s/keys :req [::_type])
+                          :map    (s/and (s/keys :req-un [::_type])
                                          (s/map-of keyword?
                                                    (s/or :record      ::rec
                                                          :reference   ::ref
@@ -79,4 +79,4 @@
                                                          :primitive   ::primitive))))))
 
 (s/def ::records (s/coll-of ::rec :kind vector?))
-(s/def ::save (s/keys :req [::records]))
+(s/def ::save (s/keys :req-un [::records]))
