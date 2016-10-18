@@ -4,10 +4,10 @@
 
 (def skygear js/skygear)
 
-(defn access [{:keys [permission]}]
+(defn access [{:keys [public]}]
   (->> (new skygear.ACL)
        ((fn [acl]
-          (case permission
+          (case public
             :none (.setPublicNoAccess acl)
             :ro   (.setPublicReadOnly acl)
             :rw   (.setPublicReadWriteAccess acl)
@@ -15,5 +15,5 @@
           acl))
        (.setDefaultACL skygear)))
 
-(s/def ::permission #{:none :ro :rw})
-(s/def ::access (s/keys :req [::permission]))
+(s/def ::public #{:none :ro :rw})
+(s/def ::access (s/keys :req [::public]))
