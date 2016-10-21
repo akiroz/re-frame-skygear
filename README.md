@@ -33,7 +33,7 @@ Here's the complete effects map:
 
 ;; <fx>      <action>        <args>
 
-{:skygear {:init        {:end-point "..."
+{:skygear [:init        {:end-point "..."
                          :api-key "..."}
            :login       {:username "foo"
                          :password "bar"}
@@ -42,7 +42,7 @@ Here's the complete effects map:
                         :password "bar"}
            :passwd      {:old-pass ""
                          :new-pass ""}
-           :access      :rw
+           :access      {:public :rw}
            :save        {:records [^:rec
                                    {:_type "person"
                                     :name "bob"
@@ -55,7 +55,7 @@ Here's the complete effects map:
            :subscribe   {"my-channel" :my-event
                          "your-channel" [:your :events]}
            :unsubscribe {"your-channel" :your}
-           :publish     {"my-channel" {:hello "world"}}}}
+           :publish     {"my-channel" {:hello "world"}}]}
 ```
 
 Every async action also supports 2 additional arguments; `:success-event` and `:fail-event`.

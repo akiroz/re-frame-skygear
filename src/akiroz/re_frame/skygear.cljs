@@ -11,40 +11,47 @@
 (def skygear js/skygear)
 
 
-(defn- sg-init [{:keys [end-point api-key]}]
+(defn- sg-config [{:keys [end-point api-key]}]
   (.config skygear #js {:endPoint end-point :apiKey api-key}))
 
 
-(defn- promises->dispatch [{:keys [success-event fail-event]} promises]
-  (-> (if (= (count promises) 1)
-        (first promises)
-        (.all js/Promise (clj->js promises)))
-      (.then  (if success-event
-                (fn [data] (dispatch [success-event data]))
-                (fn [])))
-      (.catch (if fail-event
-                (fn [err] (dispatch [fail-event err]))
-                (fn [])))))
+(defn- promises->dispatch [fx-vec promises]
+  (let [success-events  (->> (partition 2 fx-vec)
+                             (filter #(= :success (first %)))
+                             (map (fn [[_ e]] e)))
+        fail-events     (->> (partition 2 fx-vec)
+                             (filter #(= :fail (first %)))
+                             (map (fn [[_ e]] e)))]
+    (-> (case (count promises)
+          0       (.resolve js/Promise)
+          1       (first promises)
+          #_else  (.all js/Promise (clj->js promises)))
+        (.then (fn [data]
+                 (doseq [event success-events]
+                   (dispatch [event data]))))
+        (.catch (fn [err]
+                 (doseq [event fail-events]
+                   (dispatch [event err])))))))
 
-(defn- do-fx [fx-map]
-  (when-not (s/valid? ::fx-map fx-map)
-    (throw (with-out-str (s/explain ::fx-map fx-map))))
-  (->> (for [[op args] fx-map]
+(defn- do-fx [fx-vec]
+  (when-not (s/valid? ::fx-vec fx-vec)
+    (throw (with-out-str (s/explain ::fx-vec fx-vec))))
+  (->> (for [[op args] (partition 2 fx-vec)]
          (case op
-           :init         (sg-init                args)
-           :login        (sg-users/login         args)
-           :logout       (sg-users/logout        args)
-           :signup       (sg-users/signup        args)
-           :passwd       (sg-users/passwd        args)
-           :access       (sg-access/access       args)
-           :save         (sg-records/save        args)
-           :query        (sg-query/query         args)
-           ;:subscribe    (sg-events/subscribe    args)
-           ;:unsubscribe  (sg-events/unsubscribe  args)
-           ;:publish      (sg-events/publich      args)
+           :config      (sg-config              args)
+           :login       (sg-users/login         args)
+           :logout      (sg-users/logout        args)
+           :signup      (sg-users/signup        args)
+           :passwd      (sg-users/passwd        args)
+           :access      (sg-access/access       args)
+           :save        (sg-records/save        args)
+           :query       (sg-query/query         args)
+           ;:subscribe   (sg-events/subscribe    args)
+           ;:unsubscribe (sg-events/unsubscribe  args)
+           ;:publish     (sg-events/publish      args)
            #_else        nil))
        (filter (partial instance? js/Promise))
-       (promises->dispatch fx-map)))
+       (promises->dispatch fx-vec)))
 
 (defn- cofx-map []
   {:user skygear.currentUser})
@@ -53,25 +60,23 @@
 
 (s/def ::end-point string?)
 (s/def ::api-key string?)
-(s/def ::init (s/keys :req-un [::end-point ::api-key]))
+(s/def ::config (s/keys :req-un [::end-point ::api-key]))
 
-(s/def ::success-event keyword?)
-(s/def ::fail-event keyword?)
-
-(s/def ::fx-map
-  (s/keys :req-un [(or ::init
-                       ::sg-users/login
-                       ::sg-users/logout
-                       ::sg-users/signup
-                       ::sg-users/passwd
-                       ::sg-access/access
-                       ::sg-records/save
-                       ::sg-query/query
-                       ;::sg-events/subscribe
-                       ;::sg-events/unsubscribe
-                       ;::sg-events/publish
-                       )]
-          :opt-un [::success-event ::fail-event]))
+(s/def ::fx-vec
+  (s/* (s/alt :config      (s/cat :action (partial = :config)      :args ::config)
+              :login       (s/cat :action (partial = :login)       :args ::sg-users/login)
+              :logout      (s/cat :action (partial = :logout)      :args ::sg-users/logout)
+              :signup      (s/cat :action (partial = :signup)      :args ::sg-users/signup)
+              :passwd      (s/cat :action (partial = :passwd)      :args ::sg-users/passwd)
+              :access      (s/cat :action (partial = :access)      :args ::sg-access/access)
+              :save        (s/cat :action (partial = :save)        :args ::sg-records/save)
+              :query       (s/cat :action (partial = :query)       :args ::sg-query/query)
+              :subscribe   (s/cat :action (partial = :subscribe)   :args ::sg-events/subscribe)
+              :unsubscribe (s/cat :action (partial = :unsubscribe) :args ::sg-events/unsubscribe)
+              :publish     (s/cat :action (partial = :publish)     :args ::sg-events/publish)
+              :success     (s/cat :action (partial = :success)     :args keyword?)
+              :fail        (s/cat :action (partial = :fail)        :args keyword?)
+              )))
 
 
 ;; Public API ==================================================
