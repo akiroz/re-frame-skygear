@@ -6,7 +6,7 @@
 
 (def skygear js/skygear)
 
-(defn save [{:keys [records]}]
+(defn save [records]
   (let [linearized (atom [])
         references (atom {})]
     (postwalk
@@ -20,6 +20,12 @@
                                                  (.extend skygear.Record)
                                                  ((fn [cls]
                                                     (->> (dissoc elm :_type)
+                                                         ((fn [data]
+                                                            (if (:_id data)
+                                                              (update
+                                                                data :_id
+                                                                #(str (:_type elm) "/" %))
+                                                              data)))
                                                          (clj->js)
                                                          (new cls)))))
                                     ref-obj (new skygear.Reference rec-obj)]
@@ -67,10 +73,12 @@
 (s/def ::ref (s/and #(:ref (meta %))
                     (partial instance? skygear.Reference)))
 
+(s/def ::_id string?)
 (s/def ::_type string?)
 (s/def ::rec (s/and #(:rec (meta %))
                     (s/or :object (partial instance? skygear.Record)
-                          :map    (s/and (s/keys :req-un [::_type])
+                          :map    (s/and (s/keys :req-un [::_type]
+                                                 :opt-un [::_id])
                                          (s/map-of keyword?
                                                    (s/or :record      ::rec
                                                          :reference   ::ref
@@ -78,5 +86,4 @@
                                                          :geolocation ::geo
                                                          :primitive   ::primitive))))))
 
-(s/def ::records (s/coll-of ::rec :kind vector?))
-(s/def ::save (s/keys :req-un [::records]))
+(s/def ::save (s/coll-of ::rec :kind vector?))
