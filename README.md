@@ -42,6 +42,7 @@ Here's the complete effects map:
                         :password "bar"}
            :passwd      {:old-pass ""
                          :new-pass ""}
+           :whoami      {}
            :access      {:public :rw}
            :save        {:records [^:rec
                                    {:_type "person"
@@ -72,15 +73,21 @@ Since native JS objects don't support metadata,
 they must be wraped inside a vector: `^:ref [<JS Object>]`
 
 ```clojure
+;; Creates a new record and save it
 {:save {:records [                                ;; vec of items to save
                   ^:rec
                   {:_type ""                      ;; record type
                    :owner ^:ref [user]            ;; reference existing skygear record
-                   :photo ^:asset {:file obj}      ;; upload a file (JS File / URL)
+                   :photo ^:asset {:file obj}     ;; upload a file (JS File / URL)
                    :place ^:geo [0,0]             ;; geolocation (vec / skygear obj)
                    :related ^:rec                 ;; save & reference new record
                             {:_type ""
                              :field "value"}}]}}
+
+;; Updates an existing record
+{:save {:records [^:rec {:_type "person"
+                         :_id "person/4bc21b46-26f3-4474-afbb-280eee501db2"
+                         :age 21}]}}
 ```
 
 
