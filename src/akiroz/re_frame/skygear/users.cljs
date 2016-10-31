@@ -13,8 +13,8 @@
 (defn signup [{:keys [username password]}]
   (.signupWithUsername skygear username password))
 
-(defn passwd [{:keys [old-pass new-pass]}]
-  (.changePassword skygear old-pass new-pass))
+(defn change-password [{:keys [old-password new-password]}]
+  (.changePassword skygear old-password new-password))
 
 (defn whoami [_]
   (.whoami skygear))
@@ -25,11 +25,11 @@
 (s/def ::username string?)
 (s/def ::password string?)
 
-(s/def ::old-pass ::password)
-(s/def ::new-pass ::password)
+(s/def ::old-password ::password)
+(s/def ::new-password ::password)
 
 (s/def ::login (s/keys :req-un [::username ::password]))
 (s/def ::signup (s/keys :req-un [::username ::password]))
-(s/def ::passwd (s/keys :req-un [::old-pass ::new-pass]))
+(s/def ::change-password (s/keys :req-un [::old-password ::new-password]))
 (s/def ::logout anything?)
 (s/def ::whoami anything?)

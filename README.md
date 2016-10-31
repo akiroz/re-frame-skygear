@@ -33,32 +33,32 @@ Here's the complete effects map:
 
 ;; <fx>      <action>        <args>
 
-{:skygear [:init        {:end-point "..."
-                         :api-key "..."}
-           :login       {:username "foo"
-                         :password "bar"}
-           :logout      {}
-           :signup      {:username "foo"
-                        :password "bar"}
-           :passwd      {:old-pass ""
-                         :new-pass ""}
-           :whoami      {}
-           :access      {:public :rw}
-           :save        [^:rec {:_type "person"
-                                :name "bob"
-                                :age 20}]
-           :query       {:record "person"
-                         :where {:age {:>         20
-                                       :sort-asc  true}}
-                         :limit 20
-                         :page 0}
-           :subscribe   {"my-channel" :my-event
-                         "your-channel" [:your :events]}
-           :unsubscribe {"your-channel" :your}
-           :publish     {"my-channel" {:hello "world"}}]}
+{:skygear [:init            {:end-point "..."
+                             :api-key "..."}
+           :login           {:username "foo"
+                             :password "bar"}
+           :logout          {}
+           :signup          {:username "foo"
+                             :password "bar"}
+           :change-password {:old-password ""
+                             :new-password ""}
+           :whoami          {}
+           :access          {:public :rw}
+           :save            [^:rec {:_type "person"
+                                    :name "bob"
+                                    :age 20}]
+           :query           {:record "person"
+                             :where {:age {:>         20
+                                           :sort-asc  true}}
+                             :limit 20
+                             :page 0}
+           :subscribe       {"my-channel" :my-event
+                             "your-channel" [:your :events]}
+           :unsubscribe     {"your-channel" :your}
+           :publish         {"my-channel" {:hello "world"}}]}
 ```
 
-Every async action also supports 2 additional arguments; `:success-event` and `:fail-event`.
+Every async action also supports 2 additional arguments; `:success` and `:fail`.
 They expect re-frame event IDs and will be dispatched accordingly.
 
 #### Access control
