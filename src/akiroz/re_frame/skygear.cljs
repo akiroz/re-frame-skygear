@@ -14,6 +14,9 @@
 (defn- sg-config [{:keys [end-point api-key]}]
   (.config skygear #js {:endPoint end-point :apiKey api-key}))
 
+(defn- sg-lambda [{:keys [action args keywordize-keys]}]
+  (-> (.lambda skygear action (clj->js args))
+      (.then #(js->clj % :keywordize-keys (or keywordize-keys false)))))
 
 (defn- promises->dispatch [fx-vec promises]
   (let [success-events  (->> (partition 2 fx-vec)
@@ -39,6 +42,7 @@
   (->> (for [[op args] (partition 2 fx-vec)]
          (case op
            :config          (sg-config                args)
+           :lambda          (sg-lambda                args)
            :login           (sg-users/login           args)
            :logout          (sg-users/logout          args)
            :signup          (sg-users/signup          args)
@@ -63,8 +67,14 @@
 (s/def ::api-key string?)
 (s/def ::config (s/keys :req-un [::end-point ::api-key]))
 
+(s/def ::action string?)
+(s/def ::args vector?)
+(s/def ::keywordize-keys boolean?)
+(s/def ::lambda (s/keys :req-un [::action ::args]))
+
 (s/def ::fx-vec
   (s/* (s/alt :config           (s/cat :action (partial = :config)          :args ::config)
+              :lambda           (s/cat :action (partial = :lambda)          :args ::lambda)
               :login            (s/cat :action (partial = :login)           :args ::sg-users/login)
               :logout           (s/cat :action (partial = :logout)          :args ::sg-users/logout)
               :signup           (s/cat :action (partial = :signup)          :args ::sg-users/signup)
