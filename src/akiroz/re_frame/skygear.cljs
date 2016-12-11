@@ -20,21 +20,21 @@
 
 (defn- promises->dispatch [fx-vec promises]
   (let [success-events  (->> (partition 2 fx-vec)
-                             (filter #(= :success (first %)))
+                             (filter #(= :success-dispatch (first %)))
                              (map (fn [[_ e]] e)))
         fail-events     (->> (partition 2 fx-vec)
-                             (filter #(= :fail (first %)))
+                             (filter #(= :fail-dispatch (first %)))
                              (map (fn [[_ e]] e)))]
     (-> (case (count promises)
           0       (.resolve js/Promise)
           1       (first promises)
           #_else  (.all js/Promise (clj->js promises)))
         (.then (fn [data]
-                 (doseq [event success-events]
-                   (dispatch [event data]))))
+                 (doseq [event-vec success-events]
+                   (dispatch (conj event-vec data)))))
         (.catch (fn [err]
-                 (doseq [event fail-events]
-                   (dispatch [event err])))))))
+                 (doseq [event-vec fail-events]
+                   (dispatch (conj event-vec err))))))))
 
 (defn- do-fx [fx-vec]
   (when-not (s/valid? ::fx-vec fx-vec)
@@ -73,21 +73,21 @@
 (s/def ::lambda (s/keys :req-un [::action ::args]))
 
 (s/def ::fx-vec
-  (s/* (s/alt :config           (s/cat :action (partial = :config)          :args ::config)
-              :lambda           (s/cat :action (partial = :lambda)          :args ::lambda)
-              :login            (s/cat :action (partial = :login)           :args ::sg-users/login)
-              :logout           (s/cat :action (partial = :logout)          :args ::sg-users/logout)
-              :signup           (s/cat :action (partial = :signup)          :args ::sg-users/signup)
-              :change-password  (s/cat :action (partial = :change-password) :args ::sg-users/change-password)
-              :whoami           (s/cat :action (partial = :whoami)          :args ::sg-users/whoami)
-              :access           (s/cat :action (partial = :access)          :args ::sg-access/access)
-              :save             (s/cat :action (partial = :save)            :args ::sg-records/save)
-              :query            (s/cat :action (partial = :query)           :args ::sg-query/query)
-              :subscribe        (s/cat :action (partial = :subscribe)       :args ::sg-events/subscribe)
-              :unsubscribe      (s/cat :action (partial = :unsubscribe)     :args ::sg-events/unsubscribe)
-              :publish          (s/cat :action (partial = :publish)         :args ::sg-events/publish)
-              :success          (s/cat :action (partial = :success)         :args keyword?)
-              :fail             (s/cat :action (partial = :fail)            :args keyword?)
+  (s/* (s/alt :config           (s/cat :action (partial = :config)            :args ::config)
+              :lambda           (s/cat :action (partial = :lambda)            :args ::lambda)
+              :login            (s/cat :action (partial = :login)             :args ::sg-users/login)
+              :logout           (s/cat :action (partial = :logout)            :args ::sg-users/logout)
+              :signup           (s/cat :action (partial = :signup)            :args ::sg-users/signup)
+              :change-password  (s/cat :action (partial = :change-password)   :args ::sg-users/change-password)
+              :whoami           (s/cat :action (partial = :whoami)            :args ::sg-users/whoami)
+              :access           (s/cat :action (partial = :access)            :args ::sg-access/access)
+              :save             (s/cat :action (partial = :save)              :args ::sg-records/save)
+              :query            (s/cat :action (partial = :query)             :args ::sg-query/query)
+              :subscribe        (s/cat :action (partial = :subscribe)         :args ::sg-events/subscribe)
+              :unsubscribe      (s/cat :action (partial = :unsubscribe)       :args ::sg-events/unsubscribe)
+              :publish          (s/cat :action (partial = :publish)           :args ::sg-events/publish)
+              :success-dispatch (s/cat :action (partial = :success-dispatch)  :args vector?)
+              :fail-dispatch    (s/cat :action (partial = :fail-dispatch)     :args vector?)
               )))
 
 
