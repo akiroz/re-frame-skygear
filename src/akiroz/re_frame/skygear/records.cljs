@@ -50,7 +50,7 @@
                             (elm 0))
             :else elm)))
       records)
-    (.save skygear.publicDB (clj->js @linearized) #js{:atomic true})))
+    (.save skygear.publicDB (clj->js @linearized))))
 
 
 
