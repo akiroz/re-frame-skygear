@@ -1,4 +1,4 @@
-(defproject akiroz.re-frame/skygear "0.1.1-SNAPSHOT"
+(defproject akiroz.re-frame/skygear "0.1.2-SNAPSHOT"
   :description "re-frame fx & cofx handlers for the skygear BaaS"
   :url "https://github.com/akiroz/re-frame-skygear"
   :license {:name "MIT"
