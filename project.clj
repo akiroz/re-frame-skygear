@@ -1,9 +1,9 @@
-(defproject akiroz.re-frame/skygear "0.1.2-SNAPSHOT"
+(defproject akiroz.re-frame/skygear "0.1.3-SNAPSHOT"
   :description "re-frame fx & cofx handlers for the skygear BaaS"
   :url "https://github.com/akiroz/re-frame-skygear"
   :license {:name "MIT"
             :url "https://opensource.org/licenses/MIT"}
-  :dependencies [[cljsjs/skygear "0.17.0-0"]
+  :dependencies [[cljsjs/skygear "0.20.0-0"]
                  [binaryage/oops "0.4.0"]]
   
   :profiles {:test {:plugins [[lein-cljsbuild "1.1.4"]
