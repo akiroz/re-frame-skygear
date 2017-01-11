@@ -6,53 +6,68 @@
 
 (def skygear js/skygear)
 
+(defmulti parse-node
+  (fn [elm _ _]
+    [(let [tags (meta elm)]
+       (cond (:rec tags)    :rec
+             (:ref tags)    :ref
+             (:asset tags)  :asset
+             (:geo tags)    :geo
+             :else          nil))
+     (map? elm)]))
+
+(defmethod parse-node [:rec true]
+  [{:keys [_type _id] :as elm} recs refs]
+  (or (get @refs elm)
+      (let [attrs   (merge {:id (if _id (str _type "/" _id) nil)}
+                           (dissoc elm :_type :_id))
+            rec-obj (skygear.Record. _type (clj->js attrs))]
+        (doto (skygear.Reference. rec-obj)
+          (#(swap! recs conj rec-obj))
+          (#(swap! refs assoc (oget % "_id") %))))))
+
+(defmethod parse-node [:rec false]
+  [[rec-obj] recs refs]
+  (let [_id (oget rec-obj "_id")]
+    (or (get @refs _id)
+        (doto (skygear.Reference. rec-obj)
+          (#(swap! recs conj rec-obj))
+          (#(swap! refs assoc _id %))))))
+
+(defmethod parse-node [:ref true]
+  [{:keys [_id]} _ refs]
+  (doto (skygear.Reference. _id)
+    (#(swap! refs assoc _id %))))
+
+(defmethod parse-node [:ref false]
+  [[rec-obj] _ refs]
+  (doto (skygear.Reference. rec-obj)
+    (#(swap! refs assoc (oget % "_id") %))))
+
+(defmethod parse-node [:asset true]
+  [{:keys [file] filename :name} _ _]
+  (skygear.Asset.
+    #js{:file file
+        :name (or filename (str (random-uuid)))}))
+
+(defmethod parse-node [:geo false]
+  [[a b] _ _]
+  (if-not (instance? skygear.Geolocation a)
+    (skygear.Geolocation. a b)
+    a))
+
+(defmethod parse-node :default
+  [elm _ _]
+  elm)
+
 (defn save [records]
   (let [linearized (atom [])
         references (atom {})]
     (postwalk
       (fn [elm]
-        (let [tags (meta elm)]
-          (cond
-            (:rec tags)   (if (map? elm)
-                            (if-let [stored-ref (get @references (hash elm))]
-                              stored-ref
-                              (let [rec-obj (->> (:_type elm)
-                                                 (.extend skygear.Record)
-                                                 ((fn [cls]
-                                                    (->> (dissoc elm :_type)
-                                                         ((fn [data]
-                                                            (if (:_id data)
-                                                              (update
-                                                                data :_id
-                                                                #(str (:_type elm) "/" %))
-                                                              data)))
-                                                         (clj->js)
-                                                         (new cls)))))
-                                    ref-obj (new skygear.Reference rec-obj)]
-                                (swap! linearized conj rec-obj)
-                                (swap! references assoc (hash elm) ref-obj)
-                                ref-obj))
-                            (if-let [stored-ref (get @references (oget (elm 0) "id"))]
-                              stored-ref
-                              (let [rec-obj (elm 0)
-                                    ref-obj (new skygear.Reference rec-obj)]
-                                (swap! linearized conj rec-obj)
-                                (swap! references assoc (oget rec-obj "id") ref-obj)
-                                ref-obj)))
-            (:ref tags)   (let [ref-obj (new skygear.Reference (elm 0))]
-                            (swap! references assoc (oget elm "id") ref-obj)
-                            ref-obj)
-            (:asset tags) (->> (assoc elm :name (str (random-uuid)))
-                               (clj->js)
-                               (new skygear.Asset))
-            (:geo tags)   (if (= (count elm) 2)
-                            (new skygear.Geolocation (elm 0) (elm 1))
-                            (elm 0))
-            :else elm)))
+        (parse-node elm linearized references))
       records)
     (.save skygear.publicDB (clj->js @linearized))))
-
-
 
 
 (s/def ::primitive (s/or :nil      nil?
@@ -65,10 +80,11 @@
                     (s/or :tuple  (s/tuple number? number?)
                           :object (partial instance? skygear.Geolocation))))
 
-(s/def ::url string?)
-(s/def ::file (partial instance? js/File))
+(s/def ::name string?)
+(s/def ::file (partial instance? js/Blob))
 (s/def ::asset (s/and #(:asset (meta %))
-                      (s/keys :req-un [(or ::url ::file)])))
+                      (s/keys :req-un [::file]
+                              :opt-un [::name])))
 
 (s/def ::ref (s/and #(:ref (meta %))
                     (partial instance? skygear.Reference)))
